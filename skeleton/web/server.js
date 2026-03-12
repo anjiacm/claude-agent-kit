@@ -297,6 +297,31 @@ app.get('/api/cron/status', (_req, res) => {
   res.json({ tasks });
 });
 
+// ─── Knowledge Base API ───
+
+app.get('/api/knowledge', (_req, res) => {
+  const knowledgeDir = path.join(__dirname, '..', 'memory', 'knowledge');
+  const files = [];
+  try {
+    const entries = fs.readdirSync(knowledgeDir).filter(f => f.endsWith('.md') && f !== '_index.md');
+    for (const f of entries) {
+      const stat = fs.statSync(path.join(knowledgeDir, f));
+      files.push({ name: f.replace('.md', ''), file: f, lastModified: stat.mtime.toISOString() });
+    }
+  } catch {}
+  res.json({ files });
+});
+
+app.get('/api/knowledge/:topic', (req, res) => {
+  const knowledgeFile = path.join(__dirname, '..', 'memory', 'knowledge', `${req.params.topic}.md`);
+  try {
+    const content = fs.readFileSync(knowledgeFile, 'utf8');
+    res.json({ topic: req.params.topic, content });
+  } catch {
+    res.status(404).json({ error: 'knowledge file not found' });
+  }
+});
+
 // ─── Memory / Skills / History APIs ───
 
 app.get('/api/memory', (_req, res) => {

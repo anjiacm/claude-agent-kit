@@ -4,7 +4,7 @@
 
 这是一个**元项目** — 不是 Agent 本身，而是用来创建 Agent 的框架。通过 `create-agent.sh` 脚手架，可以快速生成具备完整运作体系的 Claude Code Agent 项目。
 
-## 核心架构：7 个可复用原语
+## 核心架构：8 个可复用原语
 
 | 原语 | 文件 | 说明 |
 |------|------|------|
@@ -13,6 +13,7 @@
 | Skills | `skeleton/skills/` | 按需技能，无状态，`/{name}` 调用 |
 | Plugins | `skeleton/plugins/` | 后台守护进程，有状态，独立于 Claude 进程树 |
 | Memory | `skeleton/memory/` | 每实体 Markdown 知识文件，操作前必读 |
+| Knowledge | `skeleton/memory/knowledge/` | 跨实体领域知识（基线、模式、事件日志），自我学习积累 |
 | Hooks | `skeleton/templates/claude/hooks/` | 会话生命周期自动化（启动/退出/空输入） |
 | Config | `skeleton/entities.yaml.tmpl` + `.env` | 实体清单 + 敏感配置分离 |
 
@@ -56,6 +57,13 @@ Plugin 守护进程 ───┘    ← GET /api/messages
 - **webhook-notify**：轻量 Webhook（飞书群/Slack/Discord/自定义）
 - `create-agent.sh` 交互时可选启用，未启用的自动清理
 
+### 自我学习机制
+- `docs/self-learning.md` — 完整的自我学习指南（学习闭环、知识文件设计、触发时机）
+- `skeleton/memory/knowledge/` — 知识库模板（`_index.md` 索引 + `incident-log.md` 事件日志）
+- Dashboard API：`GET /api/knowledge` 列表 + `GET /api/knowledge/:topic` 读取内容
+- 学习闭环：Plugin 报告 → Claude 对比基线 → 更新知识文件 → 下次分析更精准
+- 知识文件三类：baselines（量化基线）、patterns（因果模式）、incident-log（事件时间线）
+
 ### 实践真知
 - `docs/proven-patterns.md` 记录从生产项目验证的模式与反模式
 - CLAUDE.md.tmpl 内置功能自检清单，每次开发后验证通道完整性
@@ -79,8 +87,9 @@ claude-agent-kit/
 │   │   └── webhook-notify/← 轻量 Webhook（可选）
 │   ├── scripts/           ← 通用脚本（轮询 + Skill helpers）
 │   ├── memory/            ← 记忆模板
+│   │   └── knowledge/     ← 跨实体知识库（基线/模式/事件日志）
 │   └── templates/claude/  ← Hooks + settings 模板
-└── docs/                  ← 框架文档 + 实践真知
+└── docs/                  ← 框架文档 + 实践真知 + 自我学习指南
 ```
 
 ## 维护原则
