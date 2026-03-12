@@ -313,10 +313,18 @@ Plugin 守护进程独立于 Claude 进程树，会话结束不影响。**不需
 
 ---
 
+## 知识校验（防止"以为自己懂"）
+
+实现新概念/新工具前，调用 `/intent-check` 验证理解。Hook 会在检测到未知概念时自动提醒。
+**跳过校验的唯一理由**：用户明确说"不用查了直接做"。
+
+> 教训：Agent 最危险的错误不是"不会"，而是"以为自己会"。自信地实现错误方案的代价远大于花 1 分钟确认。
+
 ## 自我学习（事件驱动，无需记忆规则）
 
 学习由 Hook 自动驱动，不依赖 CLAUDE.md 规则记忆：
 
+- **UserPromptSubmit Hook** — 检测新概念 → 注入提醒调用 `/intent-check` 验证理解
 - **Stop Hook** — 每轮工作后自动注入反思提醒 → 发现盲区写入 `memory/knowledge/learning-queue.md`
 - **TeammateIdle Hook** — Worker 空闲时自动触发 → 调用 `self-study` Skill 学习
 - 学习流程详见 `skills/_self-study/SKILL.md`，完全由 Hook 驱动

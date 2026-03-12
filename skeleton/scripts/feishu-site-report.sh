@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# 创建飞书综合站点报告（性能 + SEO + 地域，写入 Wiki 知识库）
-# 用法: bash scripts/feishu-site-report.sh <perf.json> <seo.json> <geo.json> <token>
+# 创建飞书综合站点报告（性能 + SEO + GEO + 流量，写入 Wiki 知识库）
+# 用法: bash scripts/feishu-site-report.sh <perf.json> <seo.json> <geo.json> <traffic.json> <token>
 # 任何报告文件可传 "" 跳过
 
 set -euo pipefail
@@ -8,7 +8,8 @@ set -euo pipefail
 PERF_FILE="${1:-}"
 SEO_FILE="${2:-}"
 GEO_FILE="${3:-}"
-TOKEN="${4:-}"
+TRAFFIC_FILE="${4:-}"
+TOKEN="${5:-}"
 FEISHU_DOMAIN="${FEISHU_DOMAIN:-hengjunhome.feishu.cn}"
 
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -16,7 +17,7 @@ LOG_FILE="$PROJECT_DIR/data/cf-reports/daemon.log"
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] site-report: $*" >> "$LOG_FILE" 2>/dev/null || true; }
 
 # 至少需要一个报告
-[ -z "$PERF_FILE" ] && [ -z "$SEO_FILE" ] && [ -z "$GEO_FILE" ] && { echo ""; exit 0; }
+[ -z "$PERF_FILE" ] && [ -z "$SEO_FILE" ] && [ -z "$GEO_FILE" ] && [ -z "$TRAFFIC_FILE" ] && { echo ""; exit 0; }
 
 dt=$(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M')
 first_domain=""
@@ -248,85 +249,166 @@ if [ -n "$SEO_FILE" ] && [ -f "$SEO_FILE" ]; then
 fi
 
 # ══════════════════════════════════════════
-# 🌍 地域流量分析
+# 🤖 GEO 审计 (AI 搜索引擎优化)
 # ══════════════════════════════════════════
 if [ -n "$GEO_FILE" ] && [ -f "$GEO_FILE" ]; then
-  overview=$(jq -r '.overview // empty' "$GEO_FILE")
-  if [ -n "$overview" ] && [ "$overview" != "null" ]; then
+  geo_count=$(jq -r '.results | length' "$GEO_FILE" 2>/dev/null || echo "0")
+  if [ "$geo_count" -gt 0 ]; then
     ([ -n "$PERF_FILE" ] && [ -f "$PERF_FILE" ]) || ([ -n "$SEO_FILE" ] && [ -f "$SEO_FILE" ]) && add_divider
-    add_heading1 "🌍 地域流量分析"
+    add_heading1 "🤖 GEO 审计 (AI 搜索引擎优化)"
 
-    period=$(jq -r '.period | "\(.start) ~ \(.end) (\(.days)天)"' "$GEO_FILE")
-    total=$(jq -r '.overview.total_requests' "$GEO_FILE")
-    pv=$(jq -r '.overview.page_views' "$GEO_FILE")
-    uv=$(jq -r '.overview.unique_visitors' "$GEO_FILE")
-    bw=$(jq -r '.overview.bandwidth_mb' "$GEO_FILE")
-    cache_pct=$(jq -r '.overview.cache_ratio_pct' "$GEO_FILE")
+    i=0
+    while [ "$i" -lt "$geo_count" ]; do
+      domain=$(jq -r ".results[$i].domain" "$GEO_FILE")
+      geo_score=$(jq -r ".results[$i].geo_score" "$GEO_FILE")
+      schema_s=$(jq -r ".results[$i].scores.schema" "$GEO_FILE")
+      semantic_s=$(jq -r ".results[$i].scores.semantic" "$GEO_FILE")
+      crawl_s=$(jq -r ".results[$i].scores.crawlability" "$GEO_FILE")
+      eat_s=$(jq -r ".results[$i].scores.eat" "$GEO_FILE")
+      fresh_s=$(jq -r ".results[$i].scores.freshness" "$GEO_FILE")
 
-    add_text "📅 统计周期: ${period}"
-    add_text "总请求: ${total} | PV: ${pv} | UV: ${uv} | 带宽: ${bw}MB | 缓存率: ${cache_pct}%"
+      add_heading2 "$domain"
 
-    # 国家分布
-    add_heading2 "🗺 国家/地区分布"
-    country_count=$(jq -r '.countries | length' "$GEO_FILE")
+      ge=$(rate_emoji "$geo_score" 70 40 higher)
+      risk=$(jq -r ".results[$i].ai_visibility.visibility_risk" "$GEO_FILE")
+      risk_icon="🟢"; [ "$risk" = "medium" ] && risk_icon="🟡"; [ "$risk" = "high" ] && risk_icon="🔴"
+      add_text "$ge GEO 综合分: ${geo_score}/100  |  ${risk_icon} AI 可见性风险: ${risk}"
+      add_text "结构化数据: ${schema_s} | 语义结构: ${semantic_s} | AI 爬虫: ${crawl_s} | E-A-T: ${eat_s} | 新鲜度: ${fresh_s}"
+
+      # CF 阻止提示
+      cf_blocked=$(jq -r ".results[$i].content_structure.cf_blocked" "$GEO_FILE")
+      [ "$cf_blocked" = "true" ] && add_bullet "⚠️ CF Managed Challenge 阻止了 HTML 分析，以下结果仅基于 robots.txt 和外部可访问数据"
+
+      # Content-Signal（CF 新特性）
+      cs_search=$(jq -r ".results[$i].content_signal.search // empty" "$GEO_FILE")
+      cs_ai_input=$(jq -r ".results[$i].content_signal.ai_input // empty" "$GEO_FILE")
+      cs_ai_train=$(jq -r ".results[$i].content_signal.ai_train // empty" "$GEO_FILE")
+      if [ -n "$cs_search" ] || [ -n "$cs_ai_input" ] || [ -n "$cs_ai_train" ]; then
+        cs_text="Content-Signal:"
+        [ -n "$cs_search" ] && cs_text="${cs_text} search=${cs_search}"
+        [ -n "$cs_ai_input" ] && cs_text="${cs_text} ai-input=${cs_ai_input}"
+        [ -n "$cs_ai_train" ] && cs_text="${cs_text} ai-train=${cs_ai_train}"
+        add_code "$cs_text"
+      fi
+
+      # 结构化数据详情
+      add_heading2 "Schema.org 结构化数据"
+      types=$(jq -r '[.results['"$i"'].structured_data.types[] // empty] | join(", ")' "$GEO_FILE" 2>/dev/null || echo "")
+      has_jsonld=$(jq -r ".results[$i].structured_data.has_jsonld" "$GEO_FILE")
+      if [ "$has_jsonld" = "true" ]; then
+        add_text "✅ JSON-LD: ${types}"
+      else
+        add_text "❌ 未检测到 JSON-LD 结构化数据"
+      fi
+
+      sd_checks=""
+      for key in has_product has_faq has_organization has_breadcrumb has_review; do
+        val=$(jq -r ".results[$i].structured_data.${key}" "$GEO_FILE")
+        label=$(echo "$key" | sed 's/has_//;s/_/ /g')
+        [ "$val" = "true" ] && sd_checks="${sd_checks}✅ ${label}  " || sd_checks="${sd_checks}❌ ${label}  "
+      done
+      add_text "$sd_checks"
+
+      # AI 爬虫可访问性
+      add_heading2 "AI 爬虫可访问性"
+      blocked=$(jq -r ".results[$i].ai_crawlers.blocked_count" "$GEO_FILE")
+      bot_text=""
+      bot_count=$(jq -r ".results[$i].ai_crawlers.bots | length" "$GEO_FILE")
+      j=0
+      while [ "$j" -lt "$bot_count" ]; do
+        b_name=$(jq -r ".results[$i].ai_crawlers.bots[$j].bot" "$GEO_FILE")
+        b_status=$(jq -r ".results[$i].ai_crawlers.bots[$j].status" "$GEO_FILE")
+        icon="✅"
+        [ "$b_status" = "blocked" ] && icon="🚫"
+        [ "$b_status" = "default_blocked" ] && icon="⚠️"
+        bot_text="${bot_text}${icon} ${b_name}  "
+        j=$((j + 1))
+      done
+      add_text "$bot_text"
+      [ "$blocked" -gt 0 ] && add_bullet "⚠️ ${blocked} 个 AI 爬虫被 robots.txt 阻止"
+
+      # E-A-T 信号
+      add_heading2 "E-A-T 信号"
+      eat_checks=""
+      for key in about_page contact_page privacy_policy terms_of_service author_attribution social_profiles; do
+        val=$(jq -r ".results[$i].eat_signals.${key}" "$GEO_FILE")
+        label=$(echo "$key" | sed 's/_/ /g')
+        [ "$val" = "true" ] && eat_checks="${eat_checks}✅ ${label}\n" || eat_checks="${eat_checks}❌ ${label}\n"
+      done
+      add_text "$(echo -e "$eat_checks")"
+
+      # 内容结构
+      h1=$(jq -r ".results[$i].content_structure.h1" "$GEO_FILE")
+      h2=$(jq -r ".results[$i].content_structure.h2" "$GEO_FILE")
+      h3=$(jq -r ".results[$i].content_structure.h3" "$GEO_FILE")
+      lists=$(jq -r ".results[$i].content_structure.lists" "$GEO_FILE")
+      add_text "标题层级: H1=${h1} H2=${h2} H3=${h3} | 列表: ${lists}"
+
+      # 新鲜度
+      sitemap_fresh=$(jq -r ".results[$i].freshness.sitemap_freshness" "$GEO_FILE")
+      sitemap_urls=$(jq -r ".results[$i].freshness.sitemap_url_count" "$GEO_FILE")
+      latest_mod=$(jq -r ".results[$i].freshness.latest_mod // empty" "$GEO_FILE")
+      fresh_icon="🟢"; [ "$sitemap_fresh" = "stale" ] && fresh_icon="🔴"; [ "$sitemap_fresh" = "unknown" ] && fresh_icon="⚠️"
+      fresh_text="${fresh_icon} Sitemap: ${sitemap_fresh} (${sitemap_urls} URLs)"
+      [ -n "$latest_mod" ] && fresh_text="${fresh_text} 最近更新: ${latest_mod}"
+      add_text "$fresh_text"
+
+      i=$((i + 1))
+      [ "$i" -lt "$geo_count" ] && add_divider
+    done
+  fi
+fi
+
+# ══════════════════════════════════════════
+# 📈 流量概览
+# ══════════════════════════════════════════
+if [ -n "$TRAFFIC_FILE" ] && [ -f "$TRAFFIC_FILE" ]; then
+  overview=$(jq -r '.overview // empty' "$TRAFFIC_FILE")
+  if [ -n "$overview" ] && [ "$overview" != "null" ]; then
+    add_divider
+    add_heading1 "📈 流量概览"
+
+    period=$(jq -r '.period | "\(.start) ~ \(.end) (\(.days)天)"' "$TRAFFIC_FILE")
+    total=$(jq -r '.overview.total_requests' "$TRAFFIC_FILE")
+    pv=$(jq -r '.overview.page_views' "$TRAFFIC_FILE")
+    uv=$(jq -r '.overview.unique_visitors' "$TRAFFIC_FILE")
+    bw=$(jq -r '.overview.bandwidth_mb' "$TRAFFIC_FILE")
+    cache_pct=$(jq -r '.overview.cache_ratio_pct' "$TRAFFIC_FILE")
+
+    add_text "📅 ${period}"
+    add_text "请求: ${total} | PV: ${pv} | UV: ${uv} | 带宽: ${bw}MB | 缓存: ${cache_pct}%"
+
+    # Top 5 国家
+    add_heading2 "🗺 Top 国家"
     country_text=""
     j=0
-    while [ "$j" -lt "$country_count" ]; do
-      c_name=$(jq -r ".countries[$j].country" "$GEO_FILE")
-      c_req=$(jq -r ".countries[$j].requests" "$GEO_FILE")
-      c_pct=$(jq -r ".countries[$j].pct" "$GEO_FILE")
-      c_bw=$(jq -r ".countries[$j].bandwidth_mb" "$GEO_FILE")
-      c_threats=$(jq -r ".countries[$j].threats" "$GEO_FILE")
+    while [ "$j" -lt 5 ]; do
+      c_name=$(jq -r ".countries[$j].country // empty" "$TRAFFIC_FILE")
+      [ -z "$c_name" ] && break
+      c_req=$(jq -r ".countries[$j].requests" "$TRAFFIC_FILE")
+      c_pct=$(jq -r ".countries[$j].pct" "$TRAFFIC_FILE")
+      c_threats=$(jq -r ".countries[$j].threats" "$TRAFFIC_FILE")
       threat_mark=""
-      [ "$c_threats" -gt 100 ] 2>/dev/null && threat_mark=" ⚠️${c_threats}威胁"
-      country_text="${country_text}• ${c_name}: ${c_req} (${c_pct}%) ${c_bw}MB${threat_mark}\n"
+      [ "$c_threats" -gt 100 ] 2>/dev/null && threat_mark=" ⚠️"
+      country_text="${country_text}• ${c_name}: ${c_req} (${c_pct}%)${threat_mark}\n"
       j=$((j + 1))
     done
     add_text "$(echo -e "$country_text")"
 
-    # 浏览器分布
-    add_heading2 "🌐 浏览器分布"
-    browser_count=$(jq -r '.browsers | length' "$GEO_FILE")
-    browser_text=""
-    j=0
-    while [ "$j" -lt "$browser_count" ]; do
-      b_name=$(jq -r ".browsers[$j].browser" "$GEO_FILE")
-      b_pv=$(jq -r ".browsers[$j].page_views" "$GEO_FILE")
-      b_pct=$(jq -r ".browsers[$j].pct" "$GEO_FILE")
-      browser_text="${browser_text}• ${b_name}: ${b_pv} PV (${b_pct}%)\n"
-      j=$((j + 1))
-    done
-    add_text "$(echo -e "$browser_text")"
-
-    # HTTP 状态码
-    add_heading2 "📶 HTTP 状态码"
-    status_count=$(jq -r '.status_codes | length' "$GEO_FILE")
+    # HTTP 状态码（精简）
+    status_count=$(jq -r '.status_codes | length' "$TRAFFIC_FILE")
     status_text=""
     j=0
     while [ "$j" -lt "$status_count" ]; do
-      s_code=$(jq -r ".status_codes[$j].status" "$GEO_FILE")
-      s_req=$(jq -r ".status_codes[$j].requests" "$GEO_FILE")
+      s_code=$(jq -r ".status_codes[$j].status" "$TRAFFIC_FILE")
+      s_req=$(jq -r ".status_codes[$j].requests" "$TRAFFIC_FILE")
       icon="🟢"
       [ "$s_code" -ge 400 ] 2>/dev/null && icon="🟡"
       [ "$s_code" -ge 500 ] 2>/dev/null && icon="🔴"
-      status_text="${status_text}${icon} ${s_code}: ${s_req}  |  "
+      status_text="${status_text}${icon} ${s_code}: ${s_req}  "
       j=$((j + 1))
     done
-    add_text "${status_text%  |  }"
-
-    # 内容类型
-    add_heading2 "📁 内容类型分布"
-    ct_count=$(jq -r '.content_types | length' "$GEO_FILE")
-    ct_text=""
-    j=0
-    while [ "$j" -lt "$ct_count" ]; do
-      ct_type=$(jq -r ".content_types[$j].type" "$GEO_FILE")
-      ct_req=$(jq -r ".content_types[$j].requests" "$GEO_FILE")
-      ct_bw=$(jq -r ".content_types[$j].bandwidth_mb" "$GEO_FILE")
-      ct_text="${ct_text}• ${ct_type}: ${ct_req} 请求, ${ct_bw}MB\n"
-      j=$((j + 1))
-    done
-    add_text "$(echo -e "$ct_text")"
+    [ -n "$status_text" ] && add_text "$status_text"
   fi
 fi
 
