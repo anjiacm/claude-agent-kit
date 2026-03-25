@@ -57,7 +57,9 @@
 - ✅ Lead 只做轮询和调度，不执行 Skill → 响应快
 - ✅ 同一实体的操作分配给同一 Worker → memory 文件安全
 - ✅ 分配完毕后立即重启轮询，不等 Worker 完成
+- ✅ 有空闲 Worker 时所有任务（含研究/探索）SendMessage 给 Worker，不 spawn 新 agent
 - ❌ Lead 执行 Skill → 阻塞轮询，无法感知新消息
+- ❌ 有空闲 Worker 却 spawn Explore/general-purpose agent → iTerm 面板堆积，Worker 浪费
 - ❌ 多 Worker 同时写同一 memory 文件 → 数据丢失
 
 ## Memory 并发
