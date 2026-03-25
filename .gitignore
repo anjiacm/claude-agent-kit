@@ -1,0 +1,15 @@
+# 环境配置（绝对不能提交）
+.env
+.env.local
+*.pem
+*.key
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+
+# 生成的项目实例（不属于框架本身）
+# 如果在 kit 目录下创建了测试项目，排除它们
