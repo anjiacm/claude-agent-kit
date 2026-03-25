@@ -79,6 +79,17 @@ These agents run daily in production, built entirely with this framework:
 - 3 CronCreate heartbeats driving the self-operating cycle
 - Compliance guardrails prevent AI-automation disclosure (platform policy)
 
+### Claude Hub — Multi-Project Control Center
+
+**One Claude managing many Claudes.**
+
+When you run multiple Agent Kit projects simultaneously, you need a control layer above them. [Claude Hub](https://github.com/hengjun-dev/claude-hub) is that layer:
+
+- **tmux-based orchestration**: Each project runs in its own tmux window, Hub Claude dispatches across all
+- **Global notification system**: Desktop popups + voice alerts when any project finishes or needs authorization
+- **Tray app** (Tauri v2): Menubar panel showing all project statuses, recent notifications, pending actions
+- **Relationship to Agent Kit**: Agent Kit gives depth (full runtime within one project); Claude Hub gives breadth (unified management across projects)
+
 ---
 
 ## Architecture
