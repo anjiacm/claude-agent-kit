@@ -1,5 +1,7 @@
 # Claude Agent Kit
 
+[English](README.md) | [中文](README_CN.md)
+
 > Turn Claude Code into autonomous, self-healing, multi-worker super agents.
 
 Claude Agent Kit is a **meta-framework** for building production-grade AI agents on top of [Claude Code](https://docs.anthropic.com/en/docs/claude-code). It's not another chatbot wrapper — it's the infrastructure that lets Claude manage servers, operate phones, monitor security, and run 24/7 with zero human babysitting.
