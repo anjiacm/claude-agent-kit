@@ -194,7 +194,7 @@ UserPromptSubmit hook (prompt-check.sh)
 
 ## 跨项目知识传递
 
-当多个 Agent 实例基于同一个 claude-agent-kit 时：
+当多个 Agent 实例基于同一个 agent-kit 时：
 
 ```
 Agent A (server-maintenance)  →  学到 Shopify 安全模式
@@ -202,7 +202,7 @@ Agent B (另一个电商项目)      →  也能用这些模式
 
 共享路径：
 1. Agent A 发现有价值的通用模式
-2. 用户确认后，反哺到 claude-agent-kit/docs/proven-patterns.md
+2. 用户确认后，反哺到 agent-kit/docs/proven-patterns.md
 3. Agent B 创建时继承这些知识
 ```
 

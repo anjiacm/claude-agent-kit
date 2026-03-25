@@ -1,14 +1,14 @@
-# Claude Agent Kit
+# Agent Kit
 
 [English](README.md) | [中文](README_CN.md)
 
-> Claude Agent Kit is the **Agent Runtime** for Claude Code — giving it persistence, observability, and multi-process coordination. In short: **the body for the brain.**
+> Agent Kit is the **Agent Runtime** for Claude Code — giving it persistence, observability, and multi-process coordination. In short: **the body for the brain.**
 
 **Claude Code is the most capable AI coding CLI available today.** It has tool calling, bash execution, file editing, hooks, team spawning — everything needed for powerful single-session work.
 
 **But it's request-response by design.** It doesn't have a scheduler, a persistent memory system, a task queue, state recovery, or a lifecycle manager. To build a real autonomous agent — one that runs 24/7, survives context compression, coordinates multiple workers, and improves over time — you need an entire runtime layer on top.
 
-**Claude Agent Kit is that runtime layer.**
+**Agent Kit is that runtime layer.**
 
 ```bash
 bash create-agent.sh
@@ -170,8 +170,8 @@ That's it. Node.js and npm are needed for the Dashboard server, but Claude Code 
 
 ```bash
 # 1. Clone the framework
-git clone https://github.com/hengjun-dev/claude-agent-kit.git
-cd claude-agent-kit
+git clone https://github.com/anjiacm/agent-kit.git
+cd agent-kit
 
 # 2. Create your agent project (interactive wizard)
 bash create-agent.sh
@@ -334,7 +334,7 @@ Extracted from months of production operation (full list in `docs/proven-pattern
 ## Project Structure
 
 ```
-claude-agent-kit/
+agent-kit/
 ├── README.md                      ← You are here
 ├── create-agent.sh                ← Interactive project wizard
 ├── skeleton/                      ← Project template
@@ -423,4 +423,4 @@ MIT
 
 ---
 
-*Built with Claude Code. Powered by Claude Agent Kit.*
+*Built with Claude Code. Powered by Agent Kit.*

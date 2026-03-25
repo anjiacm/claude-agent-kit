@@ -72,7 +72,7 @@ Plugin 守护进程 ───┘    ← GET /api/messages
 ## 文件结构说明
 
 ```
-claude-agent-kit/
+agent-kit/
 ├── CLAUDE.md              ← 你正在读的这个（框架维护者的指南）
 ├── create-agent.sh        ← 交互式脚手架（含可选能力选择）
 ├── skeleton/              ← 项目模板（create-agent.sh 复制 + 变量替换）
