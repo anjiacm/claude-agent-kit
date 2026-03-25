@@ -356,8 +356,8 @@ claude-agent-kit/
 **Q: 这只是 Prompt 工程吗？**
 A: 不是。这是基础设施 — Express 服务器、WebSocket 通信、后台 Daemon、Hook 生命周期管理、中心化状态协议。Prompt（CLAUDE.md）定义 Agent **做什么**；框架提供 Agent **如何持续运行和协调**。
 
-**Q: 能用其他模型吗？**
-A: 目前专为 Claude Code 设计。Hook 系统、TeamCreate/SendMessage、Agent 工具是 Claude Code 特有功能。Dashboard 服务器和 Plugin Daemon 是模型无关的。
+**Q: 支持哪些模型？**
+A: Claude Code CLI 支持的所有模型都能用 — Opus、Sonnet、Haiku，以及未来的新模型。框架以 Claude Code 为运行时（Hook、TeamCreate、SendMessage、Agent 工具是 Claude Code 特性），你可以通过 Claude Code 的模型配置自由切换。Dashboard 服务器和 Plugin Daemon 完全与模型无关。
 
 **Q: 能支持多少个 Worker？**
 A: 已测试 2-8 个 Worker。中心化状态协议线性扩展。实际上限取决于 Claude Code 的上下文窗口和机器进程容量。

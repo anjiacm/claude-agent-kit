@@ -376,8 +376,8 @@ What agents built with this framework can do:
 **Q: Is this just prompt engineering?**
 A: No. It's infrastructure — Express servers, WebSocket communication, background daemons, hook-based lifecycle management, and a centralized state protocol. The prompts (CLAUDE.md) define *what* the agent does; the framework provides *how* it stays alive and coordinates.
 
-**Q: Does it work with models other than Claude?**
-A: Currently designed for Claude Code specifically. The hook system, TeamCreate/SendMessage, and Agent spawning are Claude Code features. The Dashboard server and Plugin daemons are model-agnostic.
+**Q: Which models does it support?**
+A: Any model available through Claude Code CLI — Opus, Sonnet, Haiku, and future models. The framework runs on Claude Code as the runtime (hooks, TeamCreate, SendMessage, Agent spawning are Claude Code features). You can freely switch models via Claude Code's model configuration. Dashboard server and Plugin daemons are completely model-agnostic.
 
 **Q: How many workers can it handle?**
 A: Tested with 2-8 workers. The centralized state protocol scales linearly. The practical limit is Claude Code's context window and your machine's process capacity.
