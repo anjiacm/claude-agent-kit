@@ -155,11 +155,22 @@ Full recovery in seconds. Zero task loss.
 
 ---
 
+## Prerequisites
+
+**Only one dependency: [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)**
+
+```bash
+# Install Claude Code (if you haven't already)
+npm install -g @anthropic-ai/claude-code
+```
+
+That's it. Node.js and npm are needed for the Dashboard server, but Claude Code itself handles everything else.
+
 ## Quick Start
 
 ```bash
 # 1. Clone the framework
-git clone https://github.com/anthropics/claude-agent-kit.git
+git clone https://github.com/hengjun-dev/claude-agent-kit.git
 cd claude-agent-kit
 
 # 2. Create your agent project (interactive wizard)
@@ -173,22 +184,25 @@ bash create-agent.sh
 # ✅ Feishu integration?     → y/n
 # ✅ Webhook notifications?  → y/n
 
-# 3. Enter your project
+# 3. Enter your project and configure
 cd ~/Documents/code/my-ops-agent
-
-# 4. Configure
 cp .env.example .env        # Fill in your API keys
 vim entities.yaml           # Add your servers/devices/targets
+bash setup.sh               # Install hooks, symlink skills
 
-# 5. Install
-bash setup.sh               # Symlink skills, hooks, sync memory
-
-# 6. Launch Claude Code in the project directory
-# → Dashboard auto-starts
-# → Workers auto-spawn
-# → Monitoring daemons auto-launch
-# → Ready for commands
+# 4. Launch — just start Claude Code and say "启动"
+claude
+# > 启动
 ```
+
+**That's the entire setup.** When you say "启动" (start), the agent automatically:
+- Starts the Dashboard server (opens in browser)
+- Initializes all entities from `entities.yaml`
+- Spawns Team Workers with heartbeat registration
+- Launches background polling + plugin daemons
+- Reports ready — waiting for commands or running autonomously
+
+No manual configuration of hooks, no starting servers by hand, no worker management. **Say one word, everything comes alive.**
 
 ---
 

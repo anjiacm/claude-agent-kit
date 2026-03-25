@@ -155,6 +155,17 @@ stop-check.sh（Hook）自动触发
 
 ---
 
+## 前置依赖
+
+**只需要一个：[Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)**
+
+```bash
+# 安装 Claude Code（如果还没装的话）
+npm install -g @anthropic-ai/claude-code
+```
+
+就这些。Dashboard 服务器需要 Node.js 和 npm，但 Claude Code 本身会处理其他一切。
+
 ## 快速开始
 
 ```bash
@@ -173,22 +184,25 @@ bash create-agent.sh
 # ✅ 飞书集成？          → y/n
 # ✅ Webhook 通知？      → y/n
 
-# 3. 进入项目
+# 3. 进入项目并配置
 cd ~/Documents/code/my-ops-agent
-
-# 4. 配置
 cp .env.example .env        # 填入 API Key
 vim entities.yaml           # 添加你的服务器/设备/目标
+bash setup.sh               # 安装 Hooks、链接 Skills
 
-# 5. 安装
-bash setup.sh               # 链接 Skills、Hooks、同步 Memory
-
-# 6. 在项目目录启动 Claude Code
-# → Dashboard 自动启动
-# → Workers 自动 spawn
-# → 监控 Daemon 自动启动
-# → 等待指令
+# 4. 启动 — 打开 Claude Code，说「启动」
+claude
+# > 启动
 ```
+
+**这就是全部安装流程。** 当你说"启动"时，Agent 自动执行：
+- 启动 Dashboard 服务（浏览器自动打开）
+- 从 `entities.yaml` 初始化所有实体
+- 创建 Team，spawn Worker 并注册心跳
+- 启动后台轮询 + Plugin 守护进程
+- 报告就绪 — 等待指令或自主运行
+
+不需要手动配置 Hook，不需要手动启动服务，不需要管理 Worker。**说一个字，一切活过来。**
 
 ---
 
